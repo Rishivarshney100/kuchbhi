@@ -15,10 +15,12 @@ interface User {
   };
 }
 
+type GameType = keyof User['scores'];
+
 interface UserContextType {
   user: User | null;
   setCurrentUser: (userId: string) => Promise<void>;
-  updateUserScore: (game: string, score: number) => Promise<void>;
+  updateUserScore: (game: GameType, score: number) => Promise<void>;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -48,7 +50,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const updateUserScore = async (game: string, score: number) => {
+  const updateUserScore = async (game: GameType, score: number) => {
     if (!user) return;
     
     try {

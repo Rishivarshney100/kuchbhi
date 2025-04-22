@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Box,
   Container,
@@ -18,16 +18,9 @@ import {
 import { collection, getDocs, query, orderBy, limit } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useUser } from '../context/UserContext';
-
-const colorPalette = {
-  primaryBg: '#7925D3',
-  secondaryBg: '#FFE600',
-  altRowBg: '#EAA1FF',
-  textColor: '#000'
-};
-
-const gameTabs = ["Technical Quiz", "Tower of Hanoi", "Word Scramble"] as const;
-type GameKey = 'technicalQuiz' | 'towerOfHanoi' | 'wordScramble';
+import { colorPalette } from '../constants/colors';
+import { gameTabs, GameKey } from '../constants/games';
+import { getGameKey } from '../utils/gameUtils';
 
 type LeaderboardEntry = {
   id: string;
@@ -51,31 +44,7 @@ const Leaderboard = () => {
     wordScramble: []
   });
 
-  useEffect(() => {
-    fetchLeaderboardData();
-  }, []);
-
-  const fetchLeaderboardData = async () => {
-    setLoading(true);
-    setError('');
-    try {
-      const technicalQuizData = await fetchGameLeaderboard('technicalQuiz');
-      const towerOfHanoiData = await fetchGameLeaderboard('towerOfHanoi');
-      const wordScrambleData = await fetchGameLeaderboard('wordScramble');
-      setLeaderboardData({
-        technicalQuiz: technicalQuizData,
-        towerOfHanoi: towerOfHanoiData,
-        wordScramble: wordScrambleData
-      });
-    } catch (err) {
-      console.error('Error fetching leaderboard data:', err);
-      setError('Failed to load leaderboard data. Please try again later.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchGameLeaderboard = async (game: GameKey): Promise<LeaderboardEntry[]> => {
+  const fetchGameLeaderboard = useCallback(async (game: GameKey): Promise<LeaderboardEntry[]> => {
     const q = query(collection(db, 'users'), orderBy(`scores.${game}`, 'desc'), limit(10));
     const snapshot = await getDocs(q);
     const entries: LeaderboardEntry[] = [];
@@ -87,9 +56,31 @@ const Leaderboard = () => {
       }
     });
     return entries;
-  };
+  }, []);
 
-  const getGameKey = (index: number): GameKey => ['technicalQuiz', 'towerOfHanoi', 'wordScramble'][index] as GameKey;
+  useEffect(() => {
+    const fetchLeaderboardData = async () => {
+      setLoading(true);
+      setError('');
+      try {
+        const technicalQuizData = await fetchGameLeaderboard('technicalQuiz');
+        const towerOfHanoiData = await fetchGameLeaderboard('towerOfHanoi');
+        const wordScrambleData = await fetchGameLeaderboard('wordScramble');
+        setLeaderboardData({
+          technicalQuiz: technicalQuizData,
+          towerOfHanoi: towerOfHanoiData,
+          wordScramble: wordScrambleData
+        });
+      } catch (err) {
+        console.error('Error fetching leaderboard data:', err);
+        setError('Failed to load leaderboard data. Please try again later.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchLeaderboardData();
+  }, [fetchGameLeaderboard]);
 
   return (
     <Container maxWidth="md">
@@ -122,9 +113,21 @@ const Leaderboard = () => {
                 </TableHead>
                 <TableBody>
                   {leaderboardData[getGameKey(tabValue)].map((entry: LeaderboardEntry, index: number) => (
-                    <TableRow key={entry.id} sx={{ backgroundColor: index % 2 === 0 ? colorPalette.secondaryBg : colorPalette.altRowBg }}>
+                    <TableRow 
+                      key={entry.id} 
+                      sx={{ 
+                        backgroundColor: index % 2 === 0 ? colorPalette.secondaryBg : colorPalette.altRowBg,
+                        ...(user && entry.id === user.id && {
+                          border: '2px solid #FF0000',
+                          fontWeight: 'bold'
+                        })
+                      }}
+                    >
                       <TableCell>{entry.rank}</TableCell>
-                      <TableCell>{entry.name}</TableCell>
+                      <TableCell>
+                        {entry.name}
+                        {user && entry.id === user.id && ' (You)'}
+                      </TableCell>
                       <TableCell>{entry.score}</TableCell>
                     </TableRow>
                   ))}
