@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Container,
@@ -18,9 +18,9 @@ import {
 import { collection, getDocs, query, orderBy, limit } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useUser } from '../context/UserContext';
-import { colorPalette } from '../constants/colors';
-import { gameTabs, GameKey } from '../constants/games';
-import { getGameKey } from '../utils/gameUtils';
+
+const gameTabs = ["Technical Quiz", "Tower of Hanoi", "Word Scramble"] as const;
+type GameKey = 'technicalQuiz' | 'towerOfHanoi' | 'wordScramble';
 
 type LeaderboardEntry = {
   id: string;
@@ -28,6 +28,8 @@ type LeaderboardEntry = {
   score: number;
   rank: number;
 };
+
+const gameKeys = ['technicalQuiz', 'towerOfHanoi', 'wordScramble'] as const;
 
 const Leaderboard = () => {
   const { user } = useUser();
@@ -38,13 +40,37 @@ const Leaderboard = () => {
     technicalQuiz: LeaderboardEntry[];
     towerOfHanoi: LeaderboardEntry[];
     wordScramble: LeaderboardEntry[];
-  }>({
+  }>( {
     technicalQuiz: [],
     towerOfHanoi: [],
     wordScramble: []
   });
 
-  const fetchGameLeaderboard = useCallback(async (game: GameKey): Promise<LeaderboardEntry[]> => {
+  useEffect(() => {
+    fetchLeaderboardData();
+  }, []);
+
+  const fetchLeaderboardData = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const technicalQuizData = await fetchGameLeaderboard('technicalQuiz');
+      const towerOfHanoiData = await fetchGameLeaderboard('towerOfHanoi');
+      const wordScrambleData = await fetchGameLeaderboard('wordScramble');
+      setLeaderboardData({
+        technicalQuiz: technicalQuizData,
+        towerOfHanoi: towerOfHanoiData,
+        wordScramble: wordScrambleData
+      });
+    } catch (err) {
+      console.error('Error fetching leaderboard data:', err);
+      setError('Failed to load leaderboard data. Please try again later.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchGameLeaderboard = async (game: GameKey): Promise<LeaderboardEntry[]> => {
     const q = query(collection(db, 'users'), orderBy(`scores.${game}`, 'desc'), limit(10));
     const snapshot = await getDocs(q);
     const entries: LeaderboardEntry[] = [];
@@ -56,85 +82,74 @@ const Leaderboard = () => {
       }
     });
     return entries;
-  }, []);
+  };
 
-  useEffect(() => {
-    const fetchLeaderboardData = async () => {
-      setLoading(true);
-      setError('');
-      try {
-        const technicalQuizData = await fetchGameLeaderboard('technicalQuiz');
-        const towerOfHanoiData = await fetchGameLeaderboard('towerOfHanoi');
-        const wordScrambleData = await fetchGameLeaderboard('wordScramble');
-        setLeaderboardData({
-          technicalQuiz: technicalQuizData,
-          towerOfHanoi: towerOfHanoiData,
-          wordScramble: wordScrambleData
-        });
-      } catch (err) {
-        console.error('Error fetching leaderboard data:', err);
-        setError('Failed to load leaderboard data. Please try again later.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchLeaderboardData();
-  }, [fetchGameLeaderboard]);
+  const getGameKey = (index: number): GameKey => gameKeys[index];
 
   return (
-    <Container maxWidth="md">
-      <Box sx={{ mt: 4, textAlign: 'center' }}>
-        <Typography variant="h4" sx={{ fontWeight: 'bold', color: colorPalette.secondaryBg }}>LEADERBOARD</Typography>
-        {error && <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>}
+    <Container maxWidth="md" sx={{ backgroundColor: '#121212', minHeight: '100vh', py: 5, color: '#fff' }}>
+      <Box sx={{ textAlign: 'center', mb: 4 }}>
+        <Typography
+          variant="h3"
+          sx={{
+            fontWeight: 'bold',
+            color: '#fff',
+            textShadow: '0 0 10px #FFE600, 0 0 20px #FFE600, 0 0 30px #FFE600',
+            mb: 2
+          }}
+        >
+          🏆 LEADERBOARD 🏆
+        </Typography>
+        {error && <Alert severity="error">{error}</Alert>}
       </Box>
 
-      <Paper sx={{ mt: 3, backgroundColor: colorPalette.primaryBg, borderRadius: 3 }}>
-        <Tabs value={tabValue} onChange={(e, val) => setTabValue(val)} centered sx={{ backgroundColor: colorPalette.secondaryBg }}>
+      <Paper sx={{ backgroundColor: '#1f1f1f', borderRadius: 4 }}>
+        <Tabs
+          value={tabValue}
+          onChange={(e, val) => setTabValue(val)}
+          centered
+          textColor="inherit"
+          TabIndicatorProps={{ style: { backgroundColor: '#FFE600' } }}
+        >
           {gameTabs.map((tab, idx) => (
-            <Tab key={idx} label={tab} sx={{ fontWeight: 'bold', color: colorPalette.textColor }} />
+            <Tab
+              key={idx}
+              label={tab}
+              sx={{ color: '#fff', fontWeight: 'bold' }}
+            />
           ))}
         </Tabs>
 
         {loading ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
-            <CircularProgress color="secondary" />
+          <Box sx={{ display: 'flex', justifyContent: 'center', p: 5 }}>
+            <CircularProgress color="inherit" />
           </Box>
         ) : (
-          <Box sx={{ p: 3 }}>
-            <TableContainer>
-              <Table>
-                <TableHead>
-                  <TableRow sx={{ backgroundColor: colorPalette.secondaryBg }}>
-                    <TableCell><b>NO.</b></TableCell>
-                    <TableCell><b>NAME</b></TableCell>
-                    <TableCell><b>POINTS</b></TableCell>
+          <TableContainer sx={{ px: 3, py: 2 }}>
+            <Table>
+              <TableHead>
+                <TableRow sx={{ backgroundColor: '#292929' }}>
+                  <TableCell sx={{ color: '#FFE600', fontWeight: 'bold' }}>RANK</TableCell>
+                  <TableCell sx={{ color: '#FFE600', fontWeight: 'bold' }}>NAME</TableCell>
+                  <TableCell sx={{ color: '#FFE600', fontWeight: 'bold' }}>SCORE</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {leaderboardData[getGameKey(tabValue)].map((entry, index) => (
+                  <TableRow
+                    key={entry.id}
+                    sx={{
+                      backgroundColor: index % 2 === 0 ? '#1a1a1a' : '#2b2b2b'
+                    }}
+                  >
+                    <TableCell sx={{ color: '#fff' }}>{entry.rank}</TableCell>
+                    <TableCell sx={{ color: '#fff' }}>{entry.name}</TableCell>
+                    <TableCell sx={{ color: '#fff' }}>{entry.score}</TableCell>
                   </TableRow>
-                </TableHead>
-                <TableBody>
-                  {leaderboardData[getGameKey(tabValue)].map((entry: LeaderboardEntry, index: number) => (
-                    <TableRow 
-                      key={entry.id} 
-                      sx={{ 
-                        backgroundColor: index % 2 === 0 ? colorPalette.secondaryBg : colorPalette.altRowBg,
-                        ...(user && entry.id === user.id && {
-                          border: '2px solid #FF0000',
-                          fontWeight: 'bold'
-                        })
-                      }}
-                    >
-                      <TableCell>{entry.rank}</TableCell>
-                      <TableCell>
-                        {entry.name}
-                        {user && entry.id === user.id && ' (You)'}
-                      </TableCell>
-                      <TableCell>{entry.score}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          </Box>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
         )}
       </Paper>
     </Container>

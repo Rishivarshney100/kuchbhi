@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Container, Paper, Typography, Box, Button } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -19,7 +19,6 @@ const TowerOfHanoi = () => {
   });
 
   const [draggedDisk, setDraggedDisk] = useState<{ disk: number; fromRod: number } | null>(null);
-  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
 
   useEffect(() => {
     initializeGame();
@@ -38,34 +37,6 @@ const TowerOfHanoi = () => {
 
   const handleDragStart = (disk: number, fromRod: number) => {
     setDraggedDisk({ disk, fromRod });
-  };
-
-  const handleTouchStart = (e: React.TouchEvent, disk: number, fromRod: number) => {
-    const touch = e.touches[0];
-    touchStartRef.current = { x: touch.clientX, y: touch.clientY };
-    handleDragStart(disk, fromRod);
-  };
-
-  const handleTouchMove = (e: React.TouchEvent) => {
-    if (!draggedDisk || !touchStartRef.current) return;
-    e.preventDefault();
-  };
-
-  const handleTouchEnd = (e: React.TouchEvent, toRodIndex: number) => {
-    if (!draggedDisk || !touchStartRef.current) return;
-    
-    const touch = e.changedTouches[0];
-    const touchEnd = { x: touch.clientX, y: touch.clientY };
-    const distance = Math.sqrt(
-      Math.pow(touchEnd.x - touchStartRef.current.x, 2) +
-      Math.pow(touchEnd.y - touchStartRef.current.y, 2)
-    );
-
-    if (distance > 10) {
-      handleDrop(toRodIndex);
-    }
-    
-    touchStartRef.current = null;
   };
 
   const handleDrop = (toRodIndex: number) => {
@@ -119,7 +90,6 @@ const TowerOfHanoi = () => {
                 key={rodIndex}
                 onDragOver={(e) => e.preventDefault()}
                 onDrop={() => handleDrop(rodIndex)}
-                onTouchEnd={(e) => handleTouchEnd(e, rodIndex)}
                 sx={{
                   flex: 1,
                   display: 'flex',
@@ -148,8 +118,6 @@ const TowerOfHanoi = () => {
                     key={index}
                     draggable={index === 0}
                     onDragStart={() => handleDragStart(disk, rodIndex)}
-                    onTouchStart={(e) => handleTouchStart(e, disk, rodIndex)}
-                    onTouchMove={handleTouchMove}
                     layout
                     style={{
                       width: `${disk * 60}px`,
@@ -162,7 +130,6 @@ const TowerOfHanoi = () => {
                       color: 'white',
                       cursor: index === 0 ? 'grab' : 'default',
                       boxShadow: '0 4px 15px rgba(0, 0, 0, 0.3)',
-                      touchAction: 'none',
                     }}
                   >
                   </motion.div>

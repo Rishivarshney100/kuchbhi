@@ -25,6 +25,7 @@ import {
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { useUser } from '../context/UserContext';
+import useSound from 'use-sound'; // optional, or use native Audio
 
 // Define question type
 interface Question {

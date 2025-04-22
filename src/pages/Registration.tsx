@@ -1,5 +1,14 @@
 import React, { useState } from 'react';
-import { Container, Paper, TextField, Button, Typography, Box, Alert, Snackbar } from '@mui/material';
+import {
+  Container,
+  Paper,
+  TextField,
+  Button,
+  Typography,
+  Box,
+  Alert,
+  Snackbar
+} from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { collection, addDoc } from 'firebase/firestore';
 import { db } from '../firebase';
@@ -30,15 +39,12 @@ const Registration = () => {
     e.preventDefault();
     setLoading(true);
     setError('');
-    
     try {
-      // Validate mobile number format
       const mobileRegex = /^[0-9]{10}$/;
       if (!mobileRegex.test(formData.mobileNumber)) {
         throw new Error('Please enter a valid 10-digit mobile number');
       }
-      
-      // Add user data to Firestore
+
       const userRef = await addDoc(collection(db, 'users'), {
         name: formData.name,
         email: formData.email,
@@ -51,11 +57,8 @@ const Registration = () => {
           wordScramble: 0
         }
       });
-      
-      // Set the newly registered user as the current user
+
       await setCurrentUser(userRef.id);
-      
-      // Navigate to games page on success
       navigate('/games');
     } catch (err: any) {
       console.error('Registration error:', err);
@@ -71,9 +74,20 @@ const Registration = () => {
   };
 
   return (
-    <Container maxWidth="sm">
-      <Box sx={{ mt: 4 }}>
-        <Paper elevation={3} sx={{ p: 4 }}>
+    <Box
+      sx={{
+        minHeight: '100vh',
+        backgroundImage: `url('rr.png')`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        py: 4,
+      }}
+    >
+      <Container maxWidth="sm">
+        <Paper elevation={3} sx={{ p: 4, backgroundColor: 'rgba(255,255,255,0.95)' }}>
           <Typography variant="h4" component="h1" gutterBottom align="center">
             Registration
           </Typography>
@@ -132,11 +146,11 @@ const Registration = () => {
             </Button>
           </form>
         </Paper>
-      </Box>
-      
-      <Snackbar 
-        open={openSnackbar} 
-        autoHideDuration={6000} 
+      </Container>
+
+      <Snackbar
+        open={openSnackbar}
+        autoHideDuration={6000}
         onClose={handleCloseSnackbar}
         anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
       >
@@ -144,8 +158,8 @@ const Registration = () => {
           {error}
         </Alert>
       </Snackbar>
-    </Container>
+    </Box>
   );
 };
 
-export default Registration; 
+export default Registration;
