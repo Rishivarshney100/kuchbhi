@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Container, 
   Paper, 
@@ -258,6 +258,7 @@ const TechnicalQuiz = () => {
   const [openSnackbar, setOpenSnackbar] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
+  const [perfectScoreSound] = useSound('/sounds/perfect_score.mp3', { volume: 0.8 });
 
   const handleTextChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -286,7 +287,7 @@ const TechnicalQuiz = () => {
     setApiError(null);
     
     try {
-      // Try to generate questions using Gemini API
+      // Generate questions using Gemini API
       const generatedQuestions = await generateQuestionsWithGemini(
         quizConfig.topic, 
         quizConfig.difficulty
@@ -307,15 +308,8 @@ const TechnicalQuiz = () => {
         : 'Failed to connect to Gemini API';
       
       setApiError(errorMessage);
-      
-      // Fallback to mock questions
-      setMessage(`Using fallback questions due to API error: ${errorMessage}`);
+      setMessage(`Failed to generate questions: ${errorMessage}`);
       setOpenSnackbar(true);
-      
-      // Use mock questions as fallback
-      const mockQuestions = generateMockQuestions(quizConfig.topic);
-      setQuestions(mockQuestions);
-      setActiveStep(1);
     } finally {
       setIsLoading(false);
     }
@@ -335,6 +329,10 @@ const TechnicalQuiz = () => {
       setSelectedAnswer(null);
     } else {
       setShowScore(true);
+      // Play perfect score sound if user got all questions right
+      if (score + 1 === questions.length) {
+        perfectScoreSound();
+      }
     }
   };
 
@@ -386,13 +384,77 @@ const TechnicalQuiz = () => {
 
   return (
     <Container maxWidth="md">
-      <Box sx={{ mt: 4, mb: 4 }}>
-        <Paper elevation={3} sx={{ p: 4 }}>
-          <Typography variant="h4" gutterBottom align="center">
-            Custom Quiz
+      <Box sx={{ 
+        mt: 4, 
+        mb: 4,
+        position: 'relative',
+        '&::before': {
+          content: '""',
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'radial-gradient(circle at 50% 0%, rgba(255, 230, 0, 0.1) 0%, transparent 50%)',
+          pointerEvents: 'none'
+        }
+      }}>
+        <Paper 
+          elevation={6} 
+          sx={{ 
+            p: 4,
+            background: 'linear-gradient(135deg, #1f1f1f 0%, #2b2b2b 100%)',
+            borderRadius: '16px',
+            position: 'relative',
+            overflow: 'hidden',
+            '&::before': {
+              content: '""',
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              background: 'radial-gradient(circle at 50% 0%, rgba(255, 230, 0, 0.05) 0%, transparent 70%)',
+              pointerEvents: 'none'
+            }
+          }}
+        >
+          <Typography 
+            variant="h4" 
+            gutterBottom 
+            align="center"
+            sx={{
+              color: '#FFE600',
+              fontWeight: 'bold',
+              textShadow: '0 0 10px rgba(255, 230, 0, 0.5)',
+              mb: 3
+            }}
+          >
+            🧠 Technical Quiz Challenge
           </Typography>
 
-          <Stepper activeStep={activeStep} sx={{ mb: 4 }}>
+          <Stepper 
+            activeStep={activeStep} 
+            sx={{ 
+              mb: 4,
+              '& .MuiStepLabel-root .Mui-completed': {
+                color: '#FFE600',
+              },
+              '& .MuiStepLabel-root .Mui-active': {
+                color: '#FFE600',
+              },
+              '& .MuiStepLabel-label': {
+                color: '#fff',
+                '&.Mui-completed': {
+                  color: '#FFE600',
+                },
+                '&.Mui-active': {
+                  color: '#FFE600',
+                  fontWeight: 'bold'
+                }
+              }
+            }}
+          >
             {steps.map((label) => (
               <Step key={label}>
                 <StepLabel>{label}</StepLabel>
@@ -401,8 +463,20 @@ const TechnicalQuiz = () => {
           </Stepper>
 
           {activeStep === 0 && (
-            <Box>
-              <Typography variant="h6" gutterBottom>
+            <Box
+              sx={{
+                animation: 'fadeIn 0.5s ease-in-out'
+              }}
+            >
+              <Typography 
+                variant="h6" 
+                gutterBottom
+                sx={{
+                  color: '#FFE600',
+                  mb: 3,
+                  textAlign: 'center'
+                }}
+              >
                 Configure Your Quiz
               </Typography>
               
@@ -414,28 +488,87 @@ const TechnicalQuiz = () => {
                   onChange={handleTextChange}
                   required
                   helperText="Enter a topic for your quiz (e.g., JavaScript, Python, React)"
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      '& fieldset': {
+                        borderColor: '#FFE600',
+                      },
+                      '&:hover fieldset': {
+                        borderColor: '#FFE600',
+                      },
+                      '&.Mui-focused fieldset': {
+                        borderColor: '#FFE600',
+                      },
+                    },
+                    '& .MuiInputLabel-root': {
+                      color: '#fff',
+                    },
+                    '& .MuiInputLabel-root.Mui-focused': {
+                      color: '#FFE600',
+                    },
+                    '& .MuiOutlinedInput-input': {
+                      color: '#fff',
+                    },
+                    '& .MuiFormHelperText-root': {
+                      color: '#FFE600',
+                    }
+                  }}
                 />
               </FormControl>
               
               <FormControl fullWidth sx={{ mb: 3 }}>
-                <InputLabel id="difficulty-label">Difficulty</InputLabel>
+                <InputLabel id="difficulty-label" sx={{ color: '#fff' }}>Difficulty</InputLabel>
                 <Select
                   labelId="difficulty-label"
                   name="difficulty"
                   value={quizConfig.difficulty}
                   onChange={handleSelectChange}
                   label="Difficulty"
+                  sx={{
+                    color: '#fff',
+                    '& .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#FFE600',
+                    },
+                    '&:hover .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#FFE600',
+                    },
+                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#FFE600',
+                    },
+                    '& .MuiSvgIcon-root': {
+                      color: '#FFE600',
+                    }
+                  }}
                 >
                   <MenuItem value="easy">Easy</MenuItem>
                   <MenuItem value="medium">Medium</MenuItem>
                   <MenuItem value="hard">Hard</MenuItem>
                 </Select>
-                <FormHelperText>Select the difficulty level of the quiz</FormHelperText>
+                <FormHelperText sx={{ color: '#FFE600' }}>
+                  Select the difficulty level of the quiz
+                </FormHelperText>
               </FormControl>
               
               <Button
                 variant="contained"
-                color="primary"
+                sx={{
+                  background: 'linear-gradient(45deg, #FFE600 30%, #FFD700 90%)',
+                  color: '#000',
+                  fontWeight: 'bold',
+                  fontSize: '1.1rem',
+                  padding: '12px 24px',
+                  borderRadius: '8px',
+                  boxShadow: '0 4px 20px rgba(255, 230, 0, 0.3)',
+                  '&:hover': {
+                    background: 'linear-gradient(45deg, #FFD700 30%, #FFE600 90%)',
+                    boxShadow: '0 6px 25px rgba(255, 230, 0, 0.4)',
+                    transform: 'translateY(-2px)'
+                  },
+                  '&:disabled': {
+                    background: '#666',
+                    color: '#999'
+                  }
+                }}
                 onClick={handleStartQuiz}
                 disabled={isLoading || !quizConfig.topic}
                 fullWidth
@@ -445,14 +578,40 @@ const TechnicalQuiz = () => {
               </Button>
               
               {isLoading && (
-                <Box sx={{ mt: 2, display: 'flex', alignItems: 'center' }}>
-                  <CircularProgress size={24} sx={{ mr: 1 }} />
-                  <Typography>Generating questions using AI...</Typography>
+                <Box 
+                  sx={{ 
+                    mt: 3, 
+                    display: 'flex', 
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 2
+                  }}
+                >
+                  <CircularProgress 
+                    size={32} 
+                    sx={{ 
+                      color: '#FFE600',
+                      '& .MuiCircularProgress-circle': {
+                        strokeLinecap: 'round'
+                      }
+                    }} 
+                  />
+                  <Typography sx={{ color: '#FFE600' }}>
+                    Generating questions using AI...
+                  </Typography>
                 </Box>
               )}
               
               {apiError && (
-                <Alert severity="warning" sx={{ mt: 2 }}>
+                <Alert 
+                  severity="warning" 
+                  sx={{ 
+                    mt: 2,
+                    background: 'rgba(255, 230, 0, 0.1)',
+                    border: '1px solid rgba(255, 230, 0, 0.3)',
+                    color: '#FFE600'
+                  }}
+                >
                   <Typography variant="body2">
                     Note: Using fallback questions because {apiError}
                   </Typography>
@@ -464,25 +623,84 @@ const TechnicalQuiz = () => {
             </Box>
           )}
 
-          {activeStep === 1 && !showScore && questions.length > 0 && (
-            <>
-              <Box sx={{ mb: 2 }}>
-                <Typography variant="h6" align="center">
+          {activeStep === 1 && !showScore && (
+            <Box
+              sx={{
+                animation: 'fadeIn 0.5s ease-in-out'
+              }}
+            >
+              <Box sx={{ mb: 3 }}>
+                <Typography 
+                  variant="h6" 
+                  align="center"
+                  sx={{
+                    color: '#FFE600',
+                    mb: 1
+                  }}
+                >
                   Question {currentQuestion + 1} of {questions.length}
                 </Typography>
                 <LinearProgress 
                   variant="determinate" 
                   value={((currentQuestion + 1) / questions.length) * 100} 
-                  sx={{ mt: 1, height: 10, borderRadius: 5 }}
+                  sx={{ 
+                    height: 10, 
+                    borderRadius: 5,
+                    background: 'rgba(255, 230, 0, 0.1)',
+                    '& .MuiLinearProgress-bar': {
+                      background: 'linear-gradient(90deg, #FFE600 0%, #FFD700 100%)',
+                      borderRadius: 5
+                    }
+                  }}
                 />
               </Box>
               
-              <Typography variant="h6" gutterBottom>
+              <Typography 
+                variant="h6" 
+                gutterBottom
+                sx={{
+                  color: '#fff',
+                  mb: 3,
+                  p: 2,
+                  background: 'rgba(255, 230, 0, 0.1)',
+                  borderRadius: '8px',
+                  border: '1px solid rgba(255, 230, 0, 0.2)'
+                }}
+              >
                 {questions[currentQuestion].question}
               </Typography>
               
               <FormControl component="fieldset" sx={{ mt: 2 }}>
-                <RadioGroup value={selectedAnswer} onChange={handleAnswerSelect}>
+                <RadioGroup 
+                  value={selectedAnswer} 
+                  onChange={handleAnswerSelect}
+                  sx={{
+                    '& .MuiFormControlLabel-root': {
+                      margin: '8px 0',
+                      padding: '8px 16px',
+                      borderRadius: '8px',
+                      background: 'rgba(255, 255, 255, 0.05)',
+                      transition: 'all 0.3s ease',
+                      '&:hover': {
+                        background: 'rgba(255, 230, 0, 0.1)',
+                        transform: 'translateX(4px)'
+                      },
+                      '&.Mui-checked': {
+                        background: 'rgba(255, 230, 0, 0.2)',
+                        border: '1px solid rgba(255, 230, 0, 0.3)'
+                      }
+                    },
+                    '& .MuiRadio-root': {
+                      color: '#FFE600',
+                      '&.Mui-checked': {
+                        color: '#FFE600'
+                      }
+                    },
+                    '& .MuiTypography-root': {
+                      color: '#fff'
+                    }
+                  }}
+                >
                   {questions[currentQuestion].options.map((option: string, index: number) => (
                     <FormControlLabel
                       key={index}
@@ -494,41 +712,125 @@ const TechnicalQuiz = () => {
                 </RadioGroup>
               </FormControl>
               
-              <Button
-                variant="contained"
-                color="primary"
-                onClick={handleNextQuestion}
-                disabled={selectedAnswer === null}
-                sx={{ mt: 2 }}
-              >
-                {currentQuestion + 1 === questions.length ? 'Finish' : 'Next Question'}
-              </Button>
-            </>
+              <Box sx={{ 
+                display: 'flex', 
+                justifyContent: 'flex-end',
+                marginTop: '-40px', // Negative margin to pull the button up
+                marginRight: '16px' // Align with the radio options padding
+              }}>
+                <Button
+                  variant="contained"
+                  sx={{
+                    background: 'linear-gradient(45deg, #FFE600 30%, #FFD700 90%)',
+                    color: '#000',
+                    fontWeight: 'bold',
+                    fontSize: '1.1rem',
+                    padding: '8px 16px', // Reduced padding for more compact look
+                    borderRadius: '8px',
+                    boxShadow: '0 4px 20px rgba(255, 230, 0, 0.3)',
+                    '&:hover': {
+                      background: 'linear-gradient(45deg, #FFD700 30%, #FFE600 90%)',
+                      boxShadow: '0 6px 25px rgba(255, 230, 0, 0.4)',
+                      transform: 'translateY(-2px)'
+                    },
+                    '&:disabled': {
+                      background: '#666',
+                      color: '#999'
+                    }
+                  }}
+                  onClick={handleNextQuestion}
+                  disabled={selectedAnswer === null}
+                >
+                  {currentQuestion + 1 === questions.length ? 'Finish' : 'Next Question'}
+                </Button>
+              </Box>
+            </Box>
           )}
 
-          {activeStep === 1 && showScore && (
-            <Box textAlign="center">
-              <Typography variant="h4" gutterBottom>
-                Quiz Complete!
+          {showScore && (
+            <Box 
+              textAlign="center"
+              sx={{
+                animation: 'fadeIn 0.5s ease-in-out'
+              }}
+            >
+              <Typography 
+                variant="h4" 
+                gutterBottom
+                sx={{
+                  color: '#FFE600',
+                  fontWeight: 'bold',
+                  textShadow: '0 0 10px rgba(255, 230, 0, 0.5)',
+                  mb: 2
+                }}
+              >
+                Quiz Complete! 🎉
               </Typography>
-              <Typography variant="h5" gutterBottom>
+              <Typography 
+                variant="h5" 
+                gutterBottom
+                sx={{
+                  color: '#fff',
+                  mb: 1
+                }}
+              >
                 Your score: {score} out of {questions.length}
               </Typography>
-              <Typography variant="h6" gutterBottom>
+              <Typography 
+                variant="h6" 
+                gutterBottom
+                sx={{
+                  color: '#FFE600',
+                  mb: 3
+                }}
+              >
                 Percentage: {Math.round((score / questions.length) * 100)}%
               </Typography>
               
-              <Box sx={{ mt: 3, display: 'flex', justifyContent: 'center', gap: 2 }}>
+              <Box 
+                sx={{ 
+                  mt: 4, 
+                  display: 'flex', 
+                  justifyContent: 'center', 
+                  gap: 2,
+                  flexWrap: 'wrap'
+                }}
+              >
                 <Button
                   variant="contained"
-                  color="primary"
+                  sx={{
+                    background: 'linear-gradient(45deg, #FFE600 30%, #FFD700 90%)',
+                    color: '#000',
+                    fontWeight: 'bold',
+                    fontSize: '1.1rem',
+                    padding: '12px 24px',
+                    borderRadius: '8px',
+                    boxShadow: '0 4px 20px rgba(255, 230, 0, 0.3)',
+                    '&:hover': {
+                      background: 'linear-gradient(45deg, #FFD700 30%, #FFE600 90%)',
+                      boxShadow: '0 6px 25px rgba(255, 230, 0, 0.4)',
+                      transform: 'translateY(-2px)'
+                    }
+                  }}
                   onClick={handleFinish}
                 >
                   Save Score & Return to Games
                 </Button>
                 <Button
                   variant="outlined"
-                  color="primary"
+                  sx={{
+                    color: '#FFE600',
+                    borderColor: '#FFE600',
+                    fontWeight: 'bold',
+                    fontSize: '1.1rem',
+                    padding: '12px 24px',
+                    borderRadius: '8px',
+                    '&:hover': {
+                      background: 'rgba(255, 230, 0, 0.1)',
+                      borderColor: '#FFD700',
+                      transform: 'translateY(-2px)'
+                    }
+                  }}
                   onClick={handleReset}
                 >
                   Take Another Quiz
@@ -545,10 +847,40 @@ const TechnicalQuiz = () => {
         onClose={handleCloseSnackbar}
         anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
       >
-        <Alert onClose={handleCloseSnackbar} severity="info" sx={{ width: '100%' }}>
+        <Alert 
+          onClose={handleCloseSnackbar} 
+          severity="info" 
+          sx={{ 
+            width: '100%',
+            background: 'rgba(255, 230, 0, 0.1)',
+            border: '1px solid rgba(255, 230, 0, 0.3)',
+            color: '#FFE600',
+            '& .MuiAlert-icon': {
+              color: '#FFE600'
+            }
+          }}
+        >
           {message}
         </Alert>
       </Snackbar>
+
+      <style>
+        {`
+          @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+          }
+          @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+          }
+          @keyframes shine {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+          }
+        `}
+      </style>
     </Container>
   );
 };
