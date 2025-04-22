@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Container, Paper, Typography, Box, Button } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 
 type Rod = number[];
 type GameState = {
@@ -19,8 +19,7 @@ const TowerOfHanoi = () => {
   });
 
   const [draggedDisk, setDraggedDisk] = useState<{ disk: number; fromRod: number } | null>(null);
-  const [touchPosition, setTouchPosition] = useState<{ x: number; y: number } | null>(null);
-  const diskRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
 
   useEffect(() => {
     initializeGame();
@@ -35,35 +34,48 @@ const TowerOfHanoi = () => {
       minMoves: Math.pow(2, numDisks) - 1
     });
     setDraggedDisk(null);
-    setTouchPosition(null);
   };
 
-  const handleTouchStart = (e: React.TouchEvent, disk: number, fromRod: number, index: number) => {
-    const touch = e.touches[0];
-    const diskElement = diskRefs.current[index];
-    if (!diskElement) return;
-
-    const rect = diskElement.getBoundingClientRect();
-    const offsetX = touch.clientX - rect.left;
-    const offsetY = touch.clientY - rect.top;
-
-    setTouchPosition({ x: offsetX, y: offsetY });
+  const handleDragStart = (disk: number, fromRod: number) => {
     setDraggedDisk({ disk, fromRod });
   };
 
+  const handleTouchStart = (e: React.TouchEvent, disk: number, fromRod: number) => {
+    const touch = e.touches[0];
+    touchStartRef.current = { x: touch.clientX, y: touch.clientY };
+    handleDragStart(disk, fromRod);
+  };
+
   const handleTouchMove = (e: React.TouchEvent) => {
-    if (!draggedDisk || !touchPosition) return;
+    if (!draggedDisk || !touchStartRef.current) return;
     e.preventDefault();
   };
 
   const handleTouchEnd = (e: React.TouchEvent, toRodIndex: number) => {
-    if (!draggedDisk) return;
+    if (!draggedDisk || !touchStartRef.current) return;
     
-    const targetRod = gameState.rods[toRodIndex];
-    const { disk, fromRod } = draggedDisk;
-    const sourceRod = gameState.rods[fromRod];
+    const touch = e.changedTouches[0];
+    const touchEnd = { x: touch.clientX, y: touch.clientY };
+    const distance = Math.sqrt(
+      Math.pow(touchEnd.x - touchStartRef.current.x, 2) +
+      Math.pow(touchEnd.y - touchStartRef.current.y, 2)
+    );
 
-    if (sourceRod[sourceRod.length - 1] !== disk) return;
+    if (distance > 10) {
+      handleDrop(toRodIndex);
+    }
+    
+    touchStartRef.current = null;
+  };
+
+  const handleDrop = (toRodIndex: number) => {
+    if (!draggedDisk) return;
+    const { disk, fromRod } = draggedDisk;
+
+    const sourceRod = gameState.rods[fromRod];
+    const targetRod = gameState.rods[toRodIndex];
+
+    if (sourceRod[sourceRod.length - 1] !== disk) return; 
     if (targetRod.length === 0 || disk < targetRod[targetRod.length - 1]) {
       const newRods = [...gameState.rods];
       newRods[fromRod] = sourceRod.slice(0, -1);
@@ -77,7 +89,6 @@ const TowerOfHanoi = () => {
     }
 
     setDraggedDisk(null);
-    setTouchPosition(null);
   };
 
   const isGameComplete = () => gameState.rods[2].length === 3;
@@ -100,13 +111,14 @@ const TowerOfHanoi = () => {
               justifyContent: 'space-between',
               gap: 3,
               mb: 3,
-              height: 300,
-              position: 'relative'
+              height: 300
             }}
           >
             {gameState.rods.map((rod, rodIndex) => (
               <Box
                 key={rodIndex}
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={() => handleDrop(rodIndex)}
                 onTouchEnd={(e) => handleTouchEnd(e, rodIndex)}
                 sx={{
                   flex: 1,
@@ -117,8 +129,7 @@ const TowerOfHanoi = () => {
                   borderRadius: 2,
                   p: 1,
                   background: 'rgba(255,255,255,0.05)',
-                  position: 'relative',
-                  touchAction: 'none'
+                  position: 'relative'
                 }}
               >
                 {/* Tower Rod */}
@@ -132,59 +143,30 @@ const TowerOfHanoi = () => {
                 }} />
 
                 {/* Disks */}
-                <AnimatePresence>
-                  {[...rod].reverse().map((disk, index) => (
-                    <motion.div
-                      key={`${rodIndex}-${disk}`}
-                      ref={(el) => {
-                        if (el) {
-                          diskRefs.current[index] = el;
-                        }
-                      }}
-                      onTouchStart={(e) => handleTouchStart(e, disk, rodIndex, index)}
-                      onTouchMove={handleTouchMove}
-                      layout
-                      initial={{ scale: 1 }}
-                      whileTap={{ scale: 1.1 }}
-                      style={{
-                        width: `${disk * 60}px`,
-                        height: '30px',
-                        background: `linear-gradient(145deg, #6a11cb, #2575fc)`,
-                        margin: '4px 0',
-                        borderRadius: '8px',
-                        zIndex: 2,
-                        textAlign: 'center',
-                        color: 'white',
-                        cursor: 'pointer',
-                        boxShadow: '0 4px 15px rgba(0, 0, 0, 0.3)',
-                        touchAction: 'none',
-                        position: 'relative'
-                      }}
-                    >
-                      {draggedDisk?.disk === disk && touchPosition && (
-                        <motion.div
-                          style={{
-                            position: 'absolute',
-                            top: touchPosition.y,
-                            left: touchPosition.x,
-                            width: '10px',
-                            height: '10px',
-                            background: 'red',
-                            borderRadius: '50%'
-                          }}
-                          animate={{
-                            x: [0, 5, 0, -5, 0],
-                            y: [0, -5, 0, 5, 0]
-                          }}
-                          transition={{
-                            duration: 1,
-                            repeat: Infinity
-                          }}
-                        />
-                      )}
-                    </motion.div>
-                  ))}
-                </AnimatePresence>
+                {[...rod].reverse().map((disk, index) => (
+                  <motion.div
+                    key={index}
+                    draggable={index === 0}
+                    onDragStart={() => handleDragStart(disk, rodIndex)}
+                    onTouchStart={(e) => handleTouchStart(e, disk, rodIndex)}
+                    onTouchMove={handleTouchMove}
+                    layout
+                    style={{
+                      width: `${disk * 60}px`,
+                      height: '30px',
+                      background: `linear-gradient(145deg, #6a11cb, #2575fc)`,
+                      margin: '4px 0',
+                      borderRadius: '8px',
+                      zIndex: 2,
+                      textAlign: 'center',
+                      color: 'white',
+                      cursor: index === 0 ? 'grab' : 'default',
+                      boxShadow: '0 4px 15px rgba(0, 0, 0, 0.3)',
+                      touchAction: 'none',
+                    }}
+                  >
+                  </motion.div>
+                ))}
               </Box>
             ))}
           </Box>
