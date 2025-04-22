@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="200" viewBox="0 0 400 200">
+  <rect width="400" height="200" fill="#f0f0f0"/>
+  <text x="200" y="50" font-family="Arial" font-size="24" text-anchor="middle" fill="#333">Word Scramble</text>
+  
+  <!-- Scrambled letters in a more centered layout -->
+  <g transform="translate(80, 100)">
+    <rect x="0" y="0" width="48" height="48" fill="#1976d2" rx="6"/>
+    <text x="24" y="32" font-family="Arial" font-size="24" text-anchor="middle" fill="white">W</text>
+    
+    <rect x="58" y="0" width="48" height="48" fill="#dc004e" rx="6"/>
+    <text x="82" y="32" font-family="Arial" font-size="24" text-anchor="middle" fill="white">O</text>
+    
+    <rect x="116" y="0" width="48" height="48" fill="#1976d2" rx="6"/>
+    <text x="140" y="32" font-family="Arial" font-size="24" text-anchor="middle" fill="white">R</text>
+    
+    <rect x="174" y="0" width="48" height="48" fill="#dc004e" rx="6"/>
+    <text x="198" y="32" font-family="Arial" font-size="24" text-anchor="middle" fill="white">D</text>
+    
+    <rect x="232" y="0" width="48" height="48" fill="#1976d2" rx="6"/>
+    <text x="256" y="32" font-family="Arial" font-size="24" text-anchor="middle" fill="white">S</text>
+  </g>
+  
+  <!-- Decorative elements -->
+  <circle cx="50" cy="160" r="15" fill="#1976d2" opacity="0.2"/>
+  <circle cx="350" cy="40" r="15" fill="#dc004e" opacity="0.2"/>
+  <circle cx="30" cy="40" r="10" fill="#1976d2" opacity="0.2"/>
+  <circle cx="370" cy="160" r="10" fill="#dc004e" opacity="0.2"/>
+</svg> 
