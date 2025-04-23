@@ -38,9 +38,9 @@ const generateWordsWithGemini = async (difficulty: string): Promise<string[]> =>
     const GEMINI_API_KEY = 'AIzaSyCpI0Dr4ZwiCfgv3LB_598oDO6eAsXkVEE';
     const prompt = `Generate 5 ${difficulty} difficulty level words for a word scramble game. 
     The words should be appropriate for the difficulty level with these exact lengths:
-    - Easy: 4-5 letters, common words (e.g., "book", "tree", "fish")
-    - Medium: 5-6 letters, slightly challenging words (e.g., "apple", "house", "water")
-    - Hard: 7-8 letters, complex or technical words (e.g., "program", "network", "science")
+    - Easy: 4-5 letters, common words
+    - Medium: 5-6 letters, slightly challenging words
+    - Hard: 7-8 letters, complex or technical words
     
     Return in format: {"words": ["word1", "word2", "word3", "word4", "word5"]}`;
 

@@ -28,6 +28,7 @@ type LeaderboardEntry = {
   name: string;
   score: number;
   rank: number;
+  createdAt: Date;
 };
 
 const Leaderboard = () => {
@@ -53,9 +54,29 @@ const Leaderboard = () => {
     snapshot.forEach((doc) => {
       const data = doc.data();
       if (data.scores && data.scores[game]) {
-        entries.push({ id: doc.id, name: data.name, score: data.scores[game], rank: rank++ });
+        entries.push({ 
+          id: doc.id, 
+          name: data.name, 
+          score: data.scores[game], 
+          rank: rank++,
+          createdAt: data.createdAt.toDate()
+        });
       }
     });
+
+    // Sort entries with equal scores by creation timestamp (older profiles get higher rank)
+    entries.sort((a, b) => {
+      if (a.score === b.score) {
+        return a.createdAt.getTime() - b.createdAt.getTime();
+      }
+      return 0; // Keep the original score-based order
+    });
+
+    // Update ranks after sorting
+    entries.forEach((entry, index) => {
+      entry.rank = index + 1;
+    });
+
     return entries;
   }, []);
 
