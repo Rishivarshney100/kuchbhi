@@ -35,10 +35,25 @@ function App() {
             <Route
               path="/"
               element={
-                <>
+                <div
+                  style={{
+                    backgroundImage: 'url("/rr.png")',
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                    backgroundRepeat: 'no-repeat',
+                    backgroundAttachment: 'fixed',
+                    width: '100vw',
+                    height: '100vh',
+                    overflow: 'hidden',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
                   <LogoBetween />
                   <Registration />
-                </>
+                </div>
               }
             />
             <Route path="/games" element={<Games />} />

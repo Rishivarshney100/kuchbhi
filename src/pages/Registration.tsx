@@ -1,14 +1,5 @@
 import React, { useState } from 'react';
-import {
-  Container,
-  Paper,
-  TextField,
-  Button,
-  Typography,
-  Box,
-  Alert,
-  Snackbar
-} from '@mui/material';
+import { Container, Paper, TextField, Button, Typography, Box, Alert, Snackbar } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { collection, addDoc } from 'firebase/firestore';
 import { db } from '../firebase';
@@ -39,6 +30,7 @@ const Registration = () => {
     e.preventDefault();
     setLoading(true);
     setError('');
+
     try {
       const mobileRegex = /^[0-9]{10}$/;
       if (!mobileRegex.test(formData.mobileNumber)) {
@@ -74,21 +66,10 @@ const Registration = () => {
   };
 
   return (
-    <Box
-      sx={{
-        minHeight: '100vh',
-        backgroundImage: `url('rr.png')`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        py: 4,
-      }}
-    >
-      <Container maxWidth="sm">
-        <Paper elevation={3} sx={{ p: 4, backgroundColor: 'rgba(255,255,255,0.95)' }}>
-          <Typography variant="h4" component="h1" gutterBottom align="center">
+    <Container maxWidth="xs">
+      <Box sx={{ mt: 2 }}>
+        <Paper elevation={3} sx={{ p: 2, maxHeight: '90vh', overflow: 'auto' }}>
+          <Typography variant="h5" component="h1" gutterBottom align="center">
             Registration
           </Typography>
           <form onSubmit={handleSubmit}>
@@ -98,7 +79,7 @@ const Registration = () => {
               name="name"
               value={formData.name}
               onChange={handleChange}
-              margin="normal"
+              margin="dense"
               required
             />
             <TextField
@@ -108,7 +89,7 @@ const Registration = () => {
               type="email"
               value={formData.email}
               onChange={handleChange}
-              margin="normal"
+              margin="dense"
               required
             />
             <TextField
@@ -117,7 +98,7 @@ const Registration = () => {
               name="mobileNumber"
               value={formData.mobileNumber}
               onChange={handleChange}
-              margin="normal"
+              margin="dense"
               required
               placeholder="10-digit mobile number"
               inputProps={{ maxLength: 10 }}
@@ -129,7 +110,7 @@ const Registration = () => {
               type="number"
               value={formData.age}
               onChange={handleChange}
-              margin="normal"
+              margin="dense"
               required
               inputProps={{ min: 1, max: 120 }}
             />
@@ -138,19 +119,19 @@ const Registration = () => {
               variant="contained"
               color="primary"
               fullWidth
-              size="large"
-              sx={{ mt: 3 }}
+              size="medium"
+              sx={{ mt: 2 }}
               disabled={loading}
             >
               {loading ? 'Registering...' : 'Register'}
             </Button>
           </form>
         </Paper>
-      </Container>
+      </Box>
 
-      <Snackbar
-        open={openSnackbar}
-        autoHideDuration={6000}
+      <Snackbar 
+        open={openSnackbar} 
+        autoHideDuration={6000} 
         onClose={handleCloseSnackbar}
         anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
       >
@@ -158,7 +139,7 @@ const Registration = () => {
           {error}
         </Alert>
       </Snackbar>
-    </Box>
+    </Container>
   );
 };
 

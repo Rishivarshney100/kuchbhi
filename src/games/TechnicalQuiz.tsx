@@ -256,9 +256,12 @@ const TechnicalQuiz = () => {
   const [showScore, setShowScore] = useState(false);
   const [message, setMessage] = useState('');
   const [openSnackbar, setOpenSnackbar] = useState(false);
+  const [messageType, setMessageType] = useState<'success' | 'error' | 'info' | 'warning'>('info');
   const [isLoading, setIsLoading] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
   const [perfectScoreSound] = useSound('/sounds/perfect_score.mp3', { volume: 0.8 });
+  const [timerSound] = useSound('/sounds/tictictic.mp3', { volume: 0.5 });
+  const [timeLeft, setTimeLeft] = useState(10); // 10 seconds timer
 
   const handleTextChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -299,6 +302,8 @@ const TechnicalQuiz = () => {
       
       setQuestions(generatedQuestions);
       setActiveStep(1);
+      setTimeLeft(10); // Reset timer when starting quiz
+      timerSound(); // Play timer sound when starting quiz
     } catch (error) {
       console.error('Error starting quiz with Gemini:', error);
       
@@ -320,21 +325,61 @@ const TechnicalQuiz = () => {
   };
 
   const handleNextQuestion = () => {
-    if (selectedAnswer === questions[currentQuestion].correctAnswer) {
+    const isCorrect = selectedAnswer === questions[currentQuestion].correctAnswer;
+    
+    if (isCorrect) {
       setScore(score + 1);
-    }
-
-    if (currentQuestion + 1 < questions.length) {
-      setCurrentQuestion(currentQuestion + 1);
-      setSelectedAnswer(null);
+      setMessage('Correct! +10 point!');
+      setMessageType('success');
     } else {
-      setShowScore(true);
-      // Play perfect score sound if user got all questions right
-      if (score + 1 === questions.length) {
-        perfectScoreSound();
-      }
+      setMessage(`Incorrect! The correct answer was: ${questions[currentQuestion].options[questions[currentQuestion].correctAnswer]}`);
+      setMessageType('error');
     }
+    
+    setOpenSnackbar(true);
+
+    // Delay moving to the next question to allow the user to see the notification
+    setTimeout(() => {
+      if (currentQuestion + 1 < questions.length) {
+        setCurrentQuestion(currentQuestion + 1);
+        setSelectedAnswer(null);
+        setTimeLeft(10); // Reset timer for next question
+        timerSound(); // Play timer sound for next question
+      } else {
+        setShowScore(true);
+        // Play perfect score sound if user got all questions right
+        if (score + 1 === questions.length) {
+          perfectScoreSound();
+        }
+      }
+    }, 1500);
   };
+
+  // Add useEffect for timer countdown
+  useEffect(() => {
+    if (activeStep === 1 && !showScore && timeLeft > 0) {
+      const timer = setTimeout(() => {
+        setTimeLeft(timeLeft - 1);
+      }, 1000);
+      return () => clearTimeout(timer);
+    } else if (timeLeft === 0 && !showScore) {
+      // Time's up, move to next question
+      setMessage('Time\'s up! Moving to next question.');
+      setMessageType('info');
+      setOpenSnackbar(true);
+      
+      setTimeout(() => {
+        if (currentQuestion + 1 < questions.length) {
+          setCurrentQuestion(currentQuestion + 1);
+          setSelectedAnswer(null);
+          setTimeLeft(10); // Reset timer for next question
+          timerSound(); // Play timer sound for next question
+        } else {
+          setShowScore(true);
+        }
+      }, 1500);
+    }
+  }, [timeLeft, activeStep, showScore, currentQuestion, questions.length, timerSound]);
 
   const handleFinish = async () => {
     try {
@@ -344,9 +389,11 @@ const TechnicalQuiz = () => {
       // Save score to Firebase
       if (user) {
         await updateUserScore('technicalQuiz', percentageScore);
-        setMessage(`Your score of ${percentageScore}% has been saved to the leaderboard!`);
+        setMessage(`Congratulations, Your score has been saved to the leaderboard!`);
+        setMessageType('success');
       } else {
         setMessage('You must be registered to save your score.');
+        setMessageType('warning');
       }
       
       setOpenSnackbar(true);
@@ -358,6 +405,7 @@ const TechnicalQuiz = () => {
     } catch (error) {
       console.error('Error saving score:', error);
       setMessage('Failed to save your score. Please try again.');
+      setMessageType('error');
       setOpenSnackbar(true);
     }
   };
@@ -378,6 +426,7 @@ const TechnicalQuiz = () => {
     setSelectedAnswer(null);
     setShowScore(false);
     setApiError(null);
+    setTimeLeft(10); // Reset timer
   };
 
   const steps = ['Configure Quiz', 'Take Quiz', 'Results'];
@@ -430,7 +479,7 @@ const TechnicalQuiz = () => {
               mb: 3
             }}
           >
-            🧠 Technical Quiz Challenge
+            Technical Quiz Challenge
           </Typography>
 
           <Stepper 
@@ -597,7 +646,7 @@ const TechnicalQuiz = () => {
                     }} 
                   />
                   <Typography sx={{ color: '#FFE600' }}>
-                    Generating questions using AI...
+                    Generating questions...
                   </Typography>
                 </Box>
               )}
@@ -640,15 +689,28 @@ const TechnicalQuiz = () => {
                 >
                   Question {currentQuestion + 1} of {questions.length}
                 </Typography>
+                <Typography 
+                  variant="h6" 
+                  align="center"
+                  sx={{
+                    color: timeLeft <= 3 ? '#ff4444' : '#FFE600',
+                    mb: 1,
+                    fontWeight: timeLeft <= 3 ? 'bold' : 'normal'
+                  }}
+                >
+                  Time Remaining: {timeLeft}s
+                </Typography>
                 <LinearProgress 
                   variant="determinate" 
-                  value={((currentQuestion + 1) / questions.length) * 100} 
+                  value={(timeLeft / 10) * 100} 
                   sx={{ 
                     height: 10, 
                     borderRadius: 5,
                     background: 'rgba(255, 230, 0, 0.1)',
                     '& .MuiLinearProgress-bar': {
-                      background: 'linear-gradient(90deg, #FFE600 0%, #FFD700 100%)',
+                      background: timeLeft <= 3 
+                        ? 'linear-gradient(90deg, #ff4444 0%, #ff0000 100%)'
+                        : 'linear-gradient(90deg, #FFE600 0%, #FFD700 100%)',
                       borderRadius: 5
                     }
                   }}
@@ -784,7 +846,6 @@ const TechnicalQuiz = () => {
                   mb: 3
                 }}
               >
-                Percentage: {Math.round((score / questions.length) * 100)}%
               </Typography>
               
               <Box 
@@ -843,20 +904,27 @@ const TechnicalQuiz = () => {
       
       <Snackbar 
         open={openSnackbar} 
-        autoHideDuration={6000} 
+        autoHideDuration={3000} 
         onClose={handleCloseSnackbar}
         anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
       >
         <Alert 
           onClose={handleCloseSnackbar} 
-          severity="info" 
+          severity={messageType} 
           sx={{ 
             width: '100%',
-            background: 'rgba(255, 230, 0, 0.1)',
-            border: '1px solid rgba(255, 230, 0, 0.3)',
-            color: '#FFE600',
+            background: messageType === 'success' 
+              ? 'rgba(76, 175, 80, 0.9)' 
+              : messageType === 'error'
+                ? 'rgba(244, 67, 54, 0.9)'
+                : 'rgba(255, 230, 0, 0.9)',
+            border: '1px solid rgba(255, 255, 255, 0.3)',
+            color: '#fff',
+            fontSize: '1.1rem',
+            fontWeight: 'bold',
             '& .MuiAlert-icon': {
-              color: '#FFE600'
+              color: '#fff',
+              fontSize: '1.5rem'
             }
           }}
         >
