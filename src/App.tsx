@@ -35,10 +35,19 @@ function App() {
             <Route
               path="/"
               element={
-                <>
+                <div
+                  style={{
+                    backgroundImage: 'url("/rr.png")',
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'top',
+                    backgroundRepeat: 'no-repeat',
+                    backgroundAttachment: 'fixed',
+                    minHeight: '100vh',
+                  }}
+                >
                   <LogoBetween />
                   <Registration />
-                </>
+                </div>
               }
             />
             <Route path="/games" element={<Games />} />
