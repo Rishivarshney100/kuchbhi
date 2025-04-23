@@ -79,8 +79,9 @@ const WordScramble = () => {
     messageType: 'info' as 'success' | 'error' | 'info' | 'warning',
     gameCompleted: false
   });
-  const [timeLeft, setTimeLeft] = useState(20);
+  const [timeLeft, setTimeLeft] = useState(10);
   const [perfectScoreSound] = useSound('/sounds/perfect_score.mp3', { volume: 0.8 });
+  const [timerSound] = useSound('/sounds/tictictic.mp3', { volume: 0.5 });
 
   const handleConfigChange = (e: SelectChangeEvent<string>) => {
     setGameConfig({ ...gameConfig, difficulty: e.target.value });
@@ -102,8 +103,9 @@ const WordScramble = () => {
         message: '',
         showMessage: false
       }));
-      setTimeLeft(20);
+      setTimeLeft(10);
       setActiveStep(1);
+      timerSound();
     } catch (error) {
       setGameState(prev => ({
         ...prev,
@@ -140,7 +142,8 @@ const WordScramble = () => {
             showMessage: false
           }));
           userInput.value = '';
-          setTimeLeft(20);
+          setTimeLeft(10);
+          timerSound();
         }, 1500);
       } else {
         setTimeout(() => {
@@ -170,7 +173,7 @@ const WordScramble = () => {
             showMessage: false
           }));
           userInput.value = '';
-          setTimeLeft(20);
+          setTimeLeft(10);
         }, 1500);
       } else {
         setTimeout(() => {
@@ -193,12 +196,13 @@ const WordScramble = () => {
           showMessage: true,
           messageType: 'info'
         }));
-        setTimeLeft(20);
+        setTimeLeft(10);
+        timerSound();
       } else {
         setGameState(prev => ({ ...prev, gameCompleted: true }));
       }
     }
-  }, [timeLeft, gameState.gameCompleted, gameState.currentWordIndex, gameState.words.length]);
+  }, [timeLeft, gameState.gameCompleted, gameState.currentWordIndex, gameState.words.length, timerSound]);
 
   return (
     <Container maxWidth="md">
@@ -362,21 +366,24 @@ const WordScramble = () => {
                   variant="h6" 
                   align="center"
                   sx={{
-                    color: '#FFE600',
-                    mb: 1
+                    color: timeLeft <= 3 ? '#ff4444' : '#FFE600',
+                    mb: 1,
+                    fontWeight: timeLeft <= 3 ? 'bold' : 'normal'
                   }}
                 >
                   Time Remaining: {timeLeft}s
                 </Typography>
                 <LinearProgress 
                   variant="determinate" 
-                  value={(timeLeft / 20) * 100} 
+                  value={(timeLeft / 10) * 100} 
                   sx={{ 
                     height: 10, 
                     borderRadius: 5,
                     background: 'rgba(255, 230, 0, 0.1)',
                     '& .MuiLinearProgress-bar': {
-                      background: 'linear-gradient(90deg, #FFE600 0%, #FFD700 100%)',
+                      background: timeLeft <= 3 
+                        ? 'linear-gradient(90deg, #ff4444 0%, #ff0000 100%)'
+                        : 'linear-gradient(90deg, #FFE600 0%, #FFD700 100%)',
                       borderRadius: 5
                     }
                   }}

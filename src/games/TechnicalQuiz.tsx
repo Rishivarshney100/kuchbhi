@@ -260,6 +260,7 @@ const TechnicalQuiz = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
   const [perfectScoreSound] = useSound('/sounds/perfect_score.mp3', { volume: 0.8 });
+  const [timerSound] = useSound('/sounds/tictictic.mp3', { volume: 0.5 });
   const [timeLeft, setTimeLeft] = useState(10); // 10 seconds timer
 
   const handleTextChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -302,6 +303,7 @@ const TechnicalQuiz = () => {
       setQuestions(generatedQuestions);
       setActiveStep(1);
       setTimeLeft(10); // Reset timer when starting quiz
+      timerSound(); // Play timer sound when starting quiz
     } catch (error) {
       console.error('Error starting quiz with Gemini:', error);
       
@@ -342,6 +344,7 @@ const TechnicalQuiz = () => {
         setCurrentQuestion(currentQuestion + 1);
         setSelectedAnswer(null);
         setTimeLeft(10); // Reset timer for next question
+        timerSound(); // Play timer sound for next question
       } else {
         setShowScore(true);
         // Play perfect score sound if user got all questions right
@@ -370,12 +373,13 @@ const TechnicalQuiz = () => {
           setCurrentQuestion(currentQuestion + 1);
           setSelectedAnswer(null);
           setTimeLeft(10); // Reset timer for next question
+          timerSound(); // Play timer sound for next question
         } else {
           setShowScore(true);
         }
       }, 1500);
     }
-  }, [timeLeft, activeStep, showScore, currentQuestion, questions.length]);
+  }, [timeLeft, activeStep, showScore, currentQuestion, questions.length, timerSound]);
 
   const handleFinish = async () => {
     try {
