@@ -1,14 +1,18 @@
-// src/components/LogoBetween.js
-
 import React from 'react';
 
 const LogoBetween = () => {
   return (
-    <div style={{ textAlign: 'center', margin: '20px 0' }}>
+    <div style={{ margin: 0, padding: 0, lineHeight: 0 }}>
       <img
-        src="/ee.png"  // Make sure glb.jpg is inside public folder
+        src="/ee.png" // Ensure this image exists in the public folder
         alt="Middle Logo"
-        style={{ height: '120px' }}
+        style={{
+          height: '100px',
+          display: 'block',
+          margin: 0,
+          padding: 0,
+          lineHeight: 0,
+        }}
       />
     </div>
   );

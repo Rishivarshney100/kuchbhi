@@ -30,15 +30,13 @@ const Registration = () => {
     e.preventDefault();
     setLoading(true);
     setError('');
-    
+
     try {
-      // Validate mobile number format
       const mobileRegex = /^[0-9]{10}$/;
       if (!mobileRegex.test(formData.mobileNumber)) {
         throw new Error('Please enter a valid 10-digit mobile number');
       }
-      
-      // Add user data to Firestore
+
       const userRef = await addDoc(collection(db, 'users'), {
         name: formData.name,
         email: formData.email,
@@ -51,11 +49,8 @@ const Registration = () => {
           wordScramble: 0
         }
       });
-      
-      // Set the newly registered user as the current user
+
       await setCurrentUser(userRef.id);
-      
-      // Navigate to games page on success
       navigate('/games');
     } catch (err: any) {
       console.error('Registration error:', err);
@@ -71,10 +66,10 @@ const Registration = () => {
   };
 
   return (
-    <Container maxWidth="sm">
-      <Box sx={{ mt: 4 }}>
-        <Paper elevation={3} sx={{ p: 4 }}>
-          <Typography variant="h4" component="h1" gutterBottom align="center">
+    <Container maxWidth="xs">
+      <Box sx={{ mt: 2 }}>
+        <Paper elevation={3} sx={{ p: 2, maxHeight: '90vh', overflow: 'auto' }}>
+          <Typography variant="h5" component="h1" gutterBottom align="center">
             Registration
           </Typography>
           <form onSubmit={handleSubmit}>
@@ -84,7 +79,7 @@ const Registration = () => {
               name="name"
               value={formData.name}
               onChange={handleChange}
-              margin="normal"
+              margin="dense"
               required
             />
             <TextField
@@ -94,7 +89,7 @@ const Registration = () => {
               type="email"
               value={formData.email}
               onChange={handleChange}
-              margin="normal"
+              margin="dense"
               required
             />
             <TextField
@@ -103,7 +98,7 @@ const Registration = () => {
               name="mobileNumber"
               value={formData.mobileNumber}
               onChange={handleChange}
-              margin="normal"
+              margin="dense"
               required
               placeholder="10-digit mobile number"
               inputProps={{ maxLength: 10 }}
@@ -115,7 +110,7 @@ const Registration = () => {
               type="number"
               value={formData.age}
               onChange={handleChange}
-              margin="normal"
+              margin="dense"
               required
               inputProps={{ min: 1, max: 120 }}
             />
@@ -124,8 +119,8 @@ const Registration = () => {
               variant="contained"
               color="primary"
               fullWidth
-              size="large"
-              sx={{ mt: 3 }}
+              size="medium"
+              sx={{ mt: 2 }}
               disabled={loading}
             >
               {loading ? 'Registering...' : 'Register'}
@@ -133,7 +128,7 @@ const Registration = () => {
           </form>
         </Paper>
       </Box>
-      
+
       <Snackbar 
         open={openSnackbar} 
         autoHideDuration={6000} 
@@ -148,4 +143,4 @@ const Registration = () => {
   );
 };
 
-export default Registration; 
+export default Registration;

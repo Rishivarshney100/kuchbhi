@@ -1,39 +1,74 @@
 import React from 'react';
-import { AppBar, Toolbar, Typography, Button, Box } from '@mui/material';
+import { AppBar, Toolbar, Typography, Button, Box, IconButton } from '@mui/material';
 import { Link as RouterLink } from 'react-router-dom';
+import MenuIcon from '@mui/icons-material/Menu';
 
 const Navbar = () => {
   return (
-    <AppBar position="static" color="primary" elevation={2}>
-      <Toolbar>
+    <AppBar 
+      position="static" 
+      color="primary" 
+      elevation={3}
+      sx={{
+        height: 45,
+        justifyContent: 'center',
+        background: 'linear-gradient(90deg, #1976d2 0%, #1565c0 100%)',
+      }}
+    >
+      <Toolbar variant="dense" sx={{ minHeight: 56, px: 2 }}>
+        {/* Left logo + optional title */}
         <Box sx={{ display: 'flex', alignItems: 'center', flexGrow: 1 }}>
-          {/* Left side logo */}
-          <img
-            src="u.png"
-            alt="Logo"
-            style={{ height: 50, marginRight: 10 }}
-          />
-          <Typography
-            variant="h6"
+          <IconButton
+            edge="start"
+            color="inherit"
             component={RouterLink}
             to="/"
-            style={{ textDecoration: 'none', color: 'white', fontWeight: 'bold' }}
+            sx={{ mr: 1, p: 0 }}
           >
-            {/* Empty for now */}
+            {/* <img
+              src="/u.png"
+              alt="Logo"
+              style={{ height: 36, width: 'auto' }}
+            /> */}
+          </IconButton>
+          <Typography
+            variant="h6"
+            sx={{
+              fontSize: '1rem',
+              color: 'white',
+              fontWeight: 600,
+              textDecoration: 'none',
+            }}
+            component={RouterLink}
+            to="/"
+          >
           </Typography>
         </Box>
 
-        
-
-        {/* Right side buttons */}
-        <Box>
-          <Button color="inherit" component={RouterLink} to="/">
+        {/* Right side nav buttons */}
+        <Box sx={{ display: 'flex', gap: 1 }}>
+          <Button
+            color="inherit"
+            component={RouterLink}
+            to="/"
+            sx={{ fontSize: '0.85rem', textTransform: 'none' }}
+          >
             Registration
           </Button>
-          <Button color="inherit" component={RouterLink} to="/games">
+          <Button
+            color="inherit"
+            component={RouterLink}
+            to="/games"
+            sx={{ fontSize: '0.85rem', textTransform: 'none' }}
+          >
             Games
           </Button>
-          <Button color="inherit" component={RouterLink} to="/leaderboard">
+          <Button
+            color="inherit"
+            component={RouterLink}
+            to="/leaderboard"
+            sx={{ fontSize: '0.85rem', textTransform: 'none' }}
+          >
             Leaderboard
           </Button>
         </Box>
