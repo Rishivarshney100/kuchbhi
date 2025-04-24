@@ -260,8 +260,9 @@ const TechnicalQuiz = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
   const [perfectScoreSound] = useSound('/sounds/perfect_score.mp3', { volume: 0.8 });
-  const [timerSound] = useSound('/sounds/tictictic.mp3', { volume: 0.5 });
+  const [timerSound, { stop: stopTimerSound }] = useSound('/sounds/tictictic.mp3', { volume: 0.5 });
   const [timeLeft, setTimeLeft] = useState(10); // 10 seconds timer
+  const [timerActive, setTimerActive] = useState(true); // New state to control timer activity
 
   const handleTextChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -322,6 +323,8 @@ const TechnicalQuiz = () => {
 
   const handleAnswerSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSelectedAnswer(Number(event.target.value));
+    setTimerActive(false); // Stop the timer when an answer is selected
+    // Don't stop the timer sound when an answer is selected
   };
 
   const handleNextQuestion = () => {
@@ -337,6 +340,7 @@ const TechnicalQuiz = () => {
     }
     
     setOpenSnackbar(true);
+    stopTimerSound(); // Stop the timer sound when moving to next question
 
     // Delay moving to the next question to allow the user to see the notification
     setTimeout(() => {
@@ -344,6 +348,7 @@ const TechnicalQuiz = () => {
         setCurrentQuestion(currentQuestion + 1);
         setSelectedAnswer(null);
         setTimeLeft(10); // Reset timer for next question
+        setTimerActive(true); // Reactivate the timer for the next question
         timerSound(); // Play timer sound for next question
       } else {
         setShowScore(true);
@@ -357,7 +362,7 @@ const TechnicalQuiz = () => {
 
   // Add useEffect for timer countdown
   useEffect(() => {
-    if (activeStep === 1 && !showScore && timeLeft > 0) {
+    if (activeStep === 1 && !showScore && timeLeft > 0 && timerActive) {
       const timer = setTimeout(() => {
         setTimeLeft(timeLeft - 1);
       }, 1000);
@@ -367,19 +372,19 @@ const TechnicalQuiz = () => {
       setMessage('Time\'s up! Moving to next question.');
       setMessageType('info');
       setOpenSnackbar(true);
+      stopTimerSound(); // Stop the timer sound when time runs out
       
       setTimeout(() => {
         if (currentQuestion + 1 < questions.length) {
           setCurrentQuestion(currentQuestion + 1);
           setSelectedAnswer(null);
-          setTimeLeft(10); // Reset timer for next question
-          timerSound(); // Play timer sound for next question
+          // Don't reset timer or play sound here - only when next button is clicked
         } else {
           setShowScore(true);
         }
       }, 1500);
     }
-  }, [timeLeft, activeStep, showScore, currentQuestion, questions.length, timerSound]);
+  }, [timeLeft, activeStep, showScore, currentQuestion, questions.length, timerSound, stopTimerSound, timerActive]);
 
   const handleFinish = async () => {
     try {
@@ -397,6 +402,7 @@ const TechnicalQuiz = () => {
       }
       
       setOpenSnackbar(true);
+      stopTimerSound(); // Stop the timer sound when finishing the quiz
       
       // Navigate to games page after a delay
       setTimeout(() => {
@@ -427,6 +433,8 @@ const TechnicalQuiz = () => {
     setShowScore(false);
     setApiError(null);
     setTimeLeft(10); // Reset timer
+    setTimerActive(true); // Reset timer activity
+    stopTimerSound(); // Stop the timer sound when resetting
   };
 
   const steps = ['Configure Quiz', 'Take Quiz', 'Results'];
