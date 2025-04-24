@@ -178,6 +178,9 @@ const WordScramble = () => {
       } else {
         setTimeout(() => {
           setGameState(prev => ({ ...prev, gameCompleted: true }));
+          if (user) {
+            updateUserScore('wordScramble', gameState.score).catch(console.error);
+          }
         }, 1500);
       }
     }
