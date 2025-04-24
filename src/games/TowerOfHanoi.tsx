@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Container, Paper, Typography, Box, Button } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { doc, updateDoc, getDoc } from 'firebase/firestore';
+import { db } from '../firebase';
+import { useUser } from '../context/UserContext';
 
 type Rod = number[];
 type GameState = {
@@ -12,11 +15,13 @@ type GameState = {
 
 const TowerOfHanoi = () => {
   const navigate = useNavigate();
+  const { user } = useUser();
   const [gameState, setGameState] = useState<GameState>({
     rods: [[], [], []],
     moves: 0,
     minMoves: 0
   });
+  const [scoreSaved, setScoreSaved] = useState(false);
 
   const [draggedDisk, setDraggedDisk] = useState<{ disk: number; fromRod: number } | null>(null);
 
@@ -63,6 +68,39 @@ const TowerOfHanoi = () => {
   };
 
   const isGameComplete = () => gameState.rods[2].length === 3;
+
+  const saveScore = async () => {
+    if (!user || scoreSaved) return;
+    
+    try {
+      const userRef = doc(db, 'users', user.id);
+      const userDoc = await getDoc(userRef);
+      const userData = userDoc.data();
+      
+      // Calculate score out of 100
+      // Perfect solution (minimum moves) = 100 points
+      // Each extra move reduces score by 10 points
+      // Minimum score is 10 points
+      const score = Math.max(100 - Math.max(0, gameState.moves - gameState.minMoves) * 10, 10);
+      
+      // Only update if the new score is higher than the existing score
+      if (!userData?.scores?.towerOfHanoi || score > userData.scores.towerOfHanoi) {
+        await updateDoc(userRef, {
+          'scores.towerOfHanoi': score
+        });
+      }
+      
+      setScoreSaved(true);
+    } catch (error) {
+      console.error('Error saving score:', error);
+    }
+  };
+
+  useEffect(() => {
+    if (isGameComplete() && !scoreSaved) {
+      saveScore();
+    }
+  }, [gameState.rods]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <Container maxWidth="md">
@@ -139,9 +177,21 @@ const TowerOfHanoi = () => {
           </Box>
 
           {isGameComplete() && (
-            <Typography variant="h5" align="center" gutterBottom>
-              🎉 Congratulations! You solved the puzzle!
-            </Typography>
+            <>
+              <Typography variant="h5" align="center" gutterBottom>
+                🎉 Congratulations! You solved the puzzle!
+              </Typography>
+              {user && scoreSaved && (
+                <Typography variant="body1" align="center" sx={{ color: '#4CAF50' }}>
+                  Score saved to leaderboard!
+                </Typography>
+              )}
+              {!user && (
+                <Typography variant="body1" align="center" sx={{ color: '#FFA726' }}>
+                  Sign in to save your score to the leaderboard!
+                </Typography>
+              )}
+            </>
           )}
 
           <Box sx={{ textAlign: 'center', mt: 3 }}>
